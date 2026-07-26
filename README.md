@@ -1,5 +1,5 @@
 # total-pacs-system
-
+masking/modes/open/close/video links/maps
 React/Vite frontend with the shared portfolio-style layout and AWS serverless backend architecture.
 
 ## MVP scope
