@@ -1,144 +1,93 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useState } from 'react';
 import './App.css';
 
-interface Badge {
-  id: string;
-  name: string;
-  badgeNumber: string;
-  accessLevelIds: string[];
-  maskedFunctions?: string[];
-}
+type Tab = 'summary' | 'sites-doors' | 'badges' | 'schedules';
 
-interface AccessLevel {
-  id: string;
-  name: string;
-  doors: string[];
-  functions: string[];
-}
+const NAV: { id: Tab; label: string }[] = [
+  { id: 'summary', label: 'Summary' },
+  { id: 'sites-doors', label: 'Sites & Doors' },
+  { id: 'badges', label: 'Badges' },
+  { id: 'schedules', label: 'Schedules' },
+];
 
-interface Schedule {
-  id: string;
-  name: string;
-  rules: Array<{ day: string; start: string; end: string }>;
-}
-
-interface Door {
-  id: string;
-  name: string;
-  location: string;
-  scheduleId?: string;
-}
-
-const api = axios.create({ baseURL: 'http://localhost:4000/api/access' });
-
-function App() {
-  const [badges, setBadges] = useState<Badge[]>([]);
-  const [accessLevels, setAccessLevels] = useState<AccessLevel[]>([]);
-  const [doors, setDoors] = useState<Door[]>([]);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [status, setStatus] = useState('loading');
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const [badgeRes, levelRes, doorRes, scheduleRes] = await Promise.all([
-          api.get('/badges'),
-          api.get('/access-levels'),
-          api.get('/doors'),
-          api.get('/schedules'),
-        ]);
-        setBadges(badgeRes.data);
-        setAccessLevels(levelRes.data);
-        setDoors(doorRes.data);
-        setSchedules(scheduleRes.data);
-        setStatus('ready');
-      } catch (error) {
-        console.error(error);
-        setStatus('error');
-      }
-    }
-
-    load();
-  }, []);
+export default function App() {
+  const [active, setActive] = useState<Tab>('summary');
 
   return (
-    <div className="app-container">
-      <header>
-        <h1>Total PACS System</h1>
-        <p>Badge management, access levels, schedules, doors, and AWS-backed storage.</p>
+    <div className="shell">
+      <header className="top-bar">
+        <div>
+          <p className="eyebrow">Total PACS System</p>
+          <h1>Enterprise access infrastructure management</h1>
+          <p className="tagline">Portfolio-style client with AWS serverless control APIs.</p>
+        </div>
       </header>
 
-      {status === 'loading' && <p>Loading system data...</p>}
-      {status === 'error' && <p>Unable to connect to backend.</p>}
+      <div className="body">
+        <aside className="sidebar">
+          {NAV.map((item) => (
+            <button
+              key={item.id}
+              className={`nav-btn${active === item.id ? ' active' : ''}`}
+              onClick={() => setActive(item.id)}
+            >
+              <span className="nav-dot" />
+              {item.label}
+            </button>
+          ))}
+        </aside>
 
-      <section>
-        <div className="panel">
-          <h2>Badges</h2>
-          {badges.length === 0 ? <p>No badges defined.</p> : (
-            <ul>
-              {badges.map((badge) => (
-                <li key={badge.id}>
-                  <strong>{badge.name}</strong> ({badge.badgeNumber})
-                  <div>Access levels: {badge.accessLevelIds.join(', ') || 'none'}</div>
-                  <div>Masked functions: {badge.maskedFunctions?.join(', ') || 'none'}</div>
-                </li>
-              ))}
-            </ul>
+        <main className="content">
+          {active === 'summary' && (
+            <section className="page">
+              <h2>Product Summary</h2>
+              <p className="lead">
+                Manage multi-site PACS entities including facilities, readers, badges, and access schedules.
+              </p>
+              <div className="card-grid">
+                <article className="card"><h3>Site Topology</h3><p>Define buildings, floors, doors, and controller assignments.</p></article>
+                <article className="card"><h3>Badge Lifecycle</h3><p>Issue, suspend, and revoke badges with role binding.</p></article>
+                <article className="card"><h3>Schedules</h3><p>Apply time windows and holiday exceptions to doors.</p></article>
+                <article className="card"><h3>Audit Stream</h3><p>Capture access outcomes with immutable timestamps.</p></article>
+              </div>
+            </section>
           )}
-        </div>
 
-        <div className="panel">
-          <h2>Access Levels</h2>
-          {accessLevels.length === 0 ? <p>No access levels configured.</p> : (
-            <ul>
-              {accessLevels.map((level) => (
-                <li key={level.id}>
-                  <strong>{level.name}</strong>
-                  <div>Doors: {level.doors.join(', ') || 'none'}</div>
-                  <div>Functions: {level.functions.join(', ') || 'none'}</div>
-                </li>
-              ))}
-            </ul>
+          {active === 'sites-doors' && (
+            <section className="page">
+              <h2>Sites and Doors MVP</h2>
+              <div className="list-card">
+                <code>GET /api/sites</code>
+                <code>POST /api/sites</code>
+                <code>GET /api/doors</code>
+                <code>POST /api/doors</code>
+              </div>
+            </section>
           )}
-        </div>
-      </section>
 
-      <section>
-        <div className="panel">
-          <h2>Doors</h2>
-          {doors.length === 0 ? <p>No doors configured.</p> : (
-            <ul>
-              {doors.map((door) => (
-                <li key={door.id}>
-                  <strong>{door.name}</strong> @ {door.location}
-                  <div>Schedule: {door.scheduleId || 'none'}</div>
-                </li>
-              ))}
-            </ul>
+          {active === 'badges' && (
+            <section className="page">
+              <h2>Badges MVP</h2>
+              <div className="list-card">
+                <code>GET /api/badges</code>
+                <code>POST /api/badges</code>
+                <code>PATCH /api/badges/:id/status</code>
+              </div>
+            </section>
           )}
-        </div>
 
-        <div className="panel">
-          <h2>Schedules</h2>
-          {schedules.length === 0 ? <p>No schedules defined.</p> : (
-            <ul>
-              {schedules.map((schedule) => (
-                <li key={schedule.id}>
-                  <strong>{schedule.name}</strong>
-                  <div>
-                    {schedule.rules.map((rule, index) => (
-                      <div key={index}>{rule.day}: {rule.start} - {rule.end}</div>
-                    ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
+          {active === 'schedules' && (
+            <section className="page">
+              <h2>Schedules MVP</h2>
+              <div className="list-card">
+                <code>GET /api/schedules</code>
+                <code>POST /api/schedules</code>
+                <p>Schedule assignments tie roles and doors by time window.</p>
+              </div>
+            </section>
           )}
-        </div>
-      </section>
+        </main>
+      </div>
     </div>
   );
 }
-
-export default App;
